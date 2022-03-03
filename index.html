@@ -1027,7 +1027,9 @@ function MineKhan() {
 	let settings = {
 		renderDistance: 4,
 		fov: 70, // Field of view in degrees
-		mouseSense: 100 // Mouse sensitivity as a percentage of the default
+		mouseSense: 100, // Mouse sensitivity as a percentage of the default
+    //added control modes: "wasd: walk, q: run, shift: sneak, space: jump, p & esc: pause, b: break, semicolon(;): exit mouse"
+    controls: 1
 	}
 	let locked = true
 	let generatedChunks
@@ -1043,6 +1045,10 @@ function MineKhan() {
 		extra: 30, // Extra height added to the world.
 		caveSize: 0.00 // Redefined right above where it's used
 	}
+  
+  
+  /* DEBUG STUFF */
+  let debugMode = false
 	let maxHeight = 255
 	let blockOutlines = false
 	let blockFill = true
@@ -1071,6 +1077,7 @@ function MineKhan() {
 	let drawScreens = {
 		"main menu": () => {},
 		"options": () => {},
+    "controls": () => {},//added controlls to drawscreens variable
 		"play": () => {},
 		"pause": () => {},
 		"creation menu": () => {},
@@ -1184,7 +1191,7 @@ function MineKhan() {
 	}
 	let place
 	let inventory = {
-		hotbar: [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ],
+		hotbar: [ 1, 2, 3, 4, 5, 6, 7, 8, 9],
 		main: [],
 		hotbarSlot: 0,
 		size: 40 * Math.min(width, height) / 600,
@@ -4315,6 +4322,7 @@ function MineKhan() {
 		Button.add(width / 2, height / 2 - 20, 400, 40, "Singleplayer", "main menu", r => changeScene("loadsave menu"))
 		Button.add(width / 2, height / 2 + 35, 400, 40, "Multiplayer", "main menu", nothing, always, "Multiplayer isn't possible at this time.")
 		Button.add(width / 2, height / 2 + 90, 400, 40, "Options", "main menu", r => changeScene("options"))
+    Button.add(width / 2, height / 2 + 145, 400, 40, "Controls", "main menu", r => changeScene("controls"))//added controls button in main menu
 
 		// Creation menu buttons
 		Button.add(width / 2, 135, 300, 40, ["World Type: Normal", "World Type: Superflat"], "creation menu", r => superflat = r === "World Type: Superflat")
@@ -4428,20 +4436,20 @@ function MineKhan() {
 		// Pause buttons
 		Button.add(width / 2, 225, 300, 40, "Resume", "pause", play)
 		Button.add(width / 2, 275, 300, 40, "Options", "pause", r => changeScene("options"))
-		Button.add(width / 2, 325, 300, 40, "Save", "pause", save, nothing, () => `Save the world to your computer/browser. Doesn't work in incognito.\n\nLast saved ${timeString(Date.now() - world.edited)}.`)
-		Button.add(width / 2, 375, 300, 40, "Get Save Code", "pause", r => {
+    Button.add(width / 2, 325, 300, 40, "Controls", "pause", r => changeScene("controls"))//added controls button to pause menu
+		Button.add(width / 2, 375, 300, 40, "Save", "pause", save, nothing, () => `Save the world to your computer/browser. Doesn't work in incognito.\n\nLast saved ${timeString(Date.now() - world.edited)}.`)
+		Button.add(width / 2, 425, 300, 40, "Get Save Code", "pause", r => {
 			savebox.classList.remove("hidden")
 			saveDirections.classList.remove("hidden")
 			savebox.value = world.getSaveString()
 		})
-		Button.add(width / 2, 425, 300, 40, "Exit Without Saving", "pause", r => {
-			savebox.value = world.getSaveString()
-			initWorldsMenu()
-			changeScene("main menu")
-		})
+		Button.add(width / 2, 575, 300, 40, "EXIT Without Saving", "pause", r => changeScene("main menu"))
 		
 		// Options buttons
 		Button.add(width / 2, 455, width / 3, 40, "Back", "options", r => changeScene(previousScreen))
+    
+    // Control buttons
+		Button.add(width / 2, 455, width / 3, 40, "Back", "controls", r => changeScene(previousScreen))
 		
 		// Comingsoon menu buttons
 		Button.add(width / 2, 395, width / 3, 40, "Back", "comingsoon menu", r => changeScene(previousScreen))
@@ -4450,7 +4458,15 @@ function MineKhan() {
 		Button.add(width / 2, 395, width / 3, 40, "¯\\_(ツ)_/¯", "multiplayer menu", r => changeScene("main menu"))
 
 		// Settings Sliders
-		Slider.add(width/2, 245, width / 3, 40, "options", "Render Distance", 1, 32, "renderDistance", val => settings.renderDistance = Math.round(val))
+		if(debugMode == true) {
+      //Slider.add(width/2, 65, width / 3, 40, "options", "Controls", "p.controlMode", val => 0)
+      Slider.add(width/2, 125, width / 3, 40, "options", "Player Fly Speed", 1, 4, "p.flySpeed", val => p.flySpeed = val)
+      Slider.add(width/2, 185, width / 3, 40, "options", "Player Run Speed", 1, 100, "p.sprintSpeed", val => p.sprintSpeed = val)
+    } else {
+      //Slider.add(width/2, 125, width / 3, 40, "options", "Controls", "p.controlMode", val => 0)
+      //Slider.add(width/2, 185, width / 3, 40, "options", "Player Run Speed", 1, 100, "p.sprintSpeed", val => p.sprintSpeed = val)
+    }
+    Slider.add(width/2, 245, width / 3, 40, "options", "Render Distance", 1, 32, "renderDistance", val => settings.renderDistance = Math.round(val))
 		Slider.add(width/2, 305, width / 3, 40, "options", "FOV", 30, 110, "fov", val => {
 			p.FOV(val)
 			if (world) {
@@ -4459,6 +4475,10 @@ function MineKhan() {
 			}
 		})
 		Slider.add(width/2, 365, width / 3, 40, "options", "Mouse Sensitivity", 30, 400, "mouseSense", val => settings.mouseSense = val)
+    
+    // Control Options
+    Slider.add(width/2, 365, width / 3, 40, "Controls", "Mouse Sensitivity", 30, 400, "mouseSense", val => settings.mouseSense = val)
+		
 	}
 	function initTextures() {
 		let textureSize = 256
@@ -4737,6 +4757,9 @@ function MineKhan() {
 
 		drawScreens.inventory()
 	}
+  
+  //Added blockCommands
+  function blockCommands() {}
 
 	let unpauseDelay = 0
 	function mmoved(e) {
@@ -4861,6 +4884,11 @@ function MineKhan() {
 
 		if (k === "t") {
 			initTextures()
+		}
+    
+    //Added Command Block Break
+    if (k === "/") {
+			blockCommands()
 		}
 
 		if (k === "enter") {
@@ -5235,6 +5263,7 @@ function MineKhan() {
 		p.velocity = new PVector(0, 0, 0)
 		p.pos = new Float32Array(3)
 		p.sprintSpeed = 1.5
+    p.controlMode = 1
 		p.flySpeed = 2.5
 		p.x = 8
 		p.y = superflat ? 6 : (Math.round(noise(8 * generator.smooth, 8 * generator.smooth) * generator.height) + 2 + generator.extra)
@@ -5504,6 +5533,11 @@ function MineKhan() {
 		drawScreens.options = () => {
 			clear()
 		}
+    
+    //added controls screen
+    drawScreens.controls = () => {
+			clear()
+		}
 		drawScreens["creation menu"] = () => {
 			dirt()
 			ctx.textAlign = 'center'
@@ -5528,7 +5562,6 @@ function MineKhan() {
 		Slider.draw()
 	}, 100)
 
-	let debugMenu = false
 	function gameLoop() {
 		let frameStart = win.performance.now()
 		if (!gl) {
